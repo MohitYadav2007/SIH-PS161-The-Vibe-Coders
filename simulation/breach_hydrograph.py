@@ -65,14 +65,44 @@ def save_hydrograph_csv(points: list[tuple[float, float]], path: str) -> None:
         writer.writerow(["time_s", "discharge_cms"])
         writer.writerows(points)
 
+def generate_rishiganga_breach_hydrograph(
+    peak_discharge_cms: float = 12762.0,
+    time_to_peak_s: float = 600.0,
+    total_duration_s: float = 1800.0,
+    baseline_cms: float = 75.0,
+    timestep_s: float = 10.0,
+) -> list[tuple[float, float]]:
+    """
+    Real breach hydrograph for the Rishiganga GLOF, Feb 7 2021.
+    See docs/breach_model.md for full sourcing and reasoning.
+
+    Peak discharge validated against:
+      - Pandey et al. 2023 (Natural Hazards): ~12,762 m3/s
+      - Shugar et al. 2021 (Science): acceptable range 8,200-14,200 m3/s
+
+    time_to_peak_s and total_duration_s are modeling assumptions
+    (no published rise-time value was found for this event) --
+    NOT derived from a paper. Flagged in docs/breach_model.md.
+    """
+    import math
+
+    decay_rate_per_s = 0.15 / 60  # converted from the per-minute rate used
+                                    # during validation in the spreadsheet
+    points = []
+    t = 0.0
+    while t <= total_duration_s:
+        if t <= time_to_peak_s and time_to_peak_s > 0:
+            q = peak_discharge_cms * (t / time_to_peak_s) ** 2
+        else:
+            q = peak_discharge_cms * math.exp(-decay_rate_per_s * (t - time_to_peak_s))
+        q = max(q, baseline_cms)
+        points.append((round(t, 1), round(q, 2)))
+        t += timestep_s
+    return points
 
 if __name__ == "__main__":
-    # TODO: replace with real breach-model-derived values once docs/breach_model.md
-    # analysis is done. These numbers are placeholders only.
-    pts = generate_synthetic_hydrograph(
-        peak_discharge_cms=1000.0,
-        time_to_peak_s=300.0,
-        total_duration_s=3600.0,
-    )
-    save_hydrograph_csv(pts, "data/sample/sample_breach_hydrograph.csv")
-    print(f"Wrote {len(pts)} points to data/sample/sample_breach_hydrograph.csv")
+    # Real Rishiganga GLOF (Feb 2021) breach hydrograph.
+    # See docs/breach_model.md for sourcing and assumptions.
+    pts = generate_rishiganga_breach_hydrograph()
+    save_hydrograph_csv(pts, "data/rishiganga/rishiganga_glof_2021_breach_hydrograph.csv")
+    print(f"Wrote {len(pts)} points to data/rishiganga/rishiganga_glof_2021_breach_hydrograph.csv")
