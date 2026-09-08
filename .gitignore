@@ -12,3 +12,6 @@ venv/
 node_modules/
 .DS_Store
 .vscode/
+*.pyc
+.env
+__pycache__/

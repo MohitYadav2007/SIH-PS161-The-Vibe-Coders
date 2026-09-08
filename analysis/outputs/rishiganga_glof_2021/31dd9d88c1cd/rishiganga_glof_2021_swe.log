@@ -1,0 +1,4 @@
+Breach location: row=0, col=0, half_width=1 cells
+Grid: 200x300 cells, dx=10.00m dy=10.00m, manning_n=0.035
+Completed 7200 iterations, simulated 7200.0s
+Peak max depth: 0.000 m

@@ -24,6 +24,15 @@ from dashboard.backend.tasks import create_job, run_job, get_job, ENGINE_FUNCS
 
 app = FastAPI(title="fuzzy-train simulation API")
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Sample data so the pipeline is runnable end-to-end before the real
 # Rishiganga DEM/hydrograph land -- see docs/architecture.md.
 SAMPLE_DEM = "data/sample/sample_dem.tif"
