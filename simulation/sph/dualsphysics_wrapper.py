@@ -58,7 +58,7 @@ from simulation.sim_result import SimResult
 
 # TODO: move to simulation/sph/config/paths.yaml once we have a shared config loader
 DUALSPHYSICS_BIN_DIR = Path(r"C:\DualSPHysics\DualSPHysics_v5.4\bin\windows")
-GENCASE_EXE = DUALSPHYSICS_BIN_DIR / "GenCase4_win64.exe"
+GENCASE_EXE = DUALSPHYSICS_BIN_DIR / "GenCase_win64.exe"
 DUALSPHYSICS_EXE = DUALSPHYSICS_BIN_DIR / "DualSPHysics5.4_win64.exe"
 MEASURETOOL_EXE = DUALSPHYSICS_BIN_DIR / "MeasureTool_win64.exe"  # VERIFY exact filename
 
