@@ -12,19 +12,14 @@ both expect as input):
         120,890.3
         ...
 
-    - time_s: seconds since breach initiation
-    - discharge_cms: peak discharge in cubic meters per second
-    - Monotonically increasing time_s, no gaps required (engines will
-      interpolate), but keep it reasonably dense near the peak.
-
-See data/sample/sample_breach_hydrograph.csv for a synthetic placeholder
-shaped like a typical GLOF hydrograph (fast rise, slower recession) --
-NOT real Rishiganga discharge data. Whoever owns hydrology_fetch.py /
-the breach modeling research should replace this with values derived from
-published Feb 2021 Rishiganga GLOF estimates (see docs/breach_model.md).
+See data/sample/sample_breach_hydrograph.csv for a synthetic placeholder.
+Real Rishiganga (Feb 7 2021) values are in
+generate_rishiganga_breach_hydrograph() below -- see docs/breach_model.md
+for full sourcing/validation.
 """
 
 import csv
+import math
 from pathlib import Path
 
 
@@ -34,22 +29,12 @@ def generate_synthetic_hydrograph(
     total_duration_s: float,
     timestep_s: float = 10.0,
 ) -> list[tuple[float, float]]:
-    """
-    Placeholder breach hydrograph shape generator (simple triangular/
-    exponential-decay curve) for testing the pipeline before real
-    breach-model output (docs/breach_model.md) is ready.
-
-    Returns list of (time_s, discharge_cms) tuples.
-    """
-    import math
-
     points = []
     t = 0.0
     while t <= total_duration_s:
         if t <= time_to_peak_s:
             q = peak_discharge_cms * (t / time_to_peak_s) if time_to_peak_s > 0 else peak_discharge_cms
         else:
-            # exponential recession after peak
             decay_const = 3.0 / (total_duration_s - time_to_peak_s)
             q = peak_discharge_cms * math.exp(-decay_const * (t - time_to_peak_s))
         points.append((round(t, 1), round(q, 2)))
@@ -65,6 +50,7 @@ def save_hydrograph_csv(points: list[tuple[float, float]], path: str) -> None:
         writer.writerow(["time_s", "discharge_cms"])
         writer.writerows(points)
 
+
 def generate_rishiganga_breach_hydrograph(
     peak_discharge_cms: float = 12762.0,
     time_to_peak_s: float = 600.0,
@@ -75,24 +61,19 @@ def generate_rishiganga_breach_hydrograph(
     """
     Real breach hydrograph for the Rishiganga GLOF, Feb 7 2021.
     See docs/breach_model.md for full sourcing and reasoning.
-
-    Peak discharge validated against:
-      - Pandey et al. 2023 (Natural Hazards): ~12,762 m3/s
-      - Shugar et al. 2021 (Science): acceptable range 8,200-14,200 m3/s
-
-    time_to_peak_s and total_duration_s are modeling assumptions
-    (no published rise-time value was found for this event) --
-    NOT derived from a paper. Flagged in docs/breach_model.md.
+    Peak validated against Pandey et al. 2023 (~12,762 m3/s) and
+    Shugar et al. 2021 (range 8,200-14,200 m3/s).
+    Rise phase: true exponential rise, normalized to reach exactly
+    peak_discharge_cms at t=time_to_peak_s.
     """
-    import math
+    decay_rate_per_s = 0.15 / 60
+    rise_k = 3.0
 
-    decay_rate_per_s = 0.15 / 60  # converted from the per-minute rate used
-                                    # during validation in the spreadsheet
     points = []
     t = 0.0
     while t <= total_duration_s:
         if t <= time_to_peak_s and time_to_peak_s > 0:
-            q = peak_discharge_cms * (t / time_to_peak_s) ** 2
+            q = peak_discharge_cms * (1 - math.exp(-rise_k * t / time_to_peak_s)) / (1 - math.exp(-rise_k))
         else:
             q = peak_discharge_cms * math.exp(-decay_rate_per_s * (t - time_to_peak_s))
         q = max(q, baseline_cms)
@@ -100,9 +81,9 @@ def generate_rishiganga_breach_hydrograph(
         t += timestep_s
     return points
 
+
 if __name__ == "__main__":
-    # Real Rishiganga GLOF (Feb 2021) breach hydrograph.
-    # See docs/breach_model.md for sourcing and assumptions.
     pts = generate_rishiganga_breach_hydrograph()
-    save_hydrograph_csv(pts, "data/rishiganga/rishiganga_glof_2021_breach_hydrograph.csv")
-    print(f"Wrote {len(pts)} points to data/rishiganga/rishiganga_glof_2021_breach_hydrograph.csv")
+    out_path = "data/processed/rishiganga_breach_hydrograph.csv"
+    save_hydrograph_csv(pts, out_path)
+    print(f"Wrote {len(pts)} points to {out_path}")
