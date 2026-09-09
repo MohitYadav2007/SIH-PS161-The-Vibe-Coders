@@ -18,17 +18,19 @@ from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from dashboard.backend.tasks import create_job, run_job, get_job, ENGINE_FUNCS
 
 app = FastAPI(title="fuzzy-train simulation API")
 
-from fastapi.middleware.cors import CORSMiddleware
-
+# Widened for the hackathon since the frontend's exact dev port wasn't
+# confirmed across everyone's machines -- tighten to the real frontend
+# origin before any real deployment, this is demo-only.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
