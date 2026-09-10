@@ -93,9 +93,9 @@ def run_sph_simulation(
     """
     config = config or {}
     output_dir = Path(output_dir)
-    case_dir = output_dir / case_name
+    case_dir = output_dir  # matches delft3d_runner.py -- tasks.py already makes this unique per case_name/job_id
     case_dir.mkdir(parents=True, exist_ok=True)
-    log_path = output_dir / f"{case_name}_dualsphysics.log"
+    log_path = case_dir / f"{case_name}_dualsphysics.log"
     start = time.time()
     log_lines = []
 
